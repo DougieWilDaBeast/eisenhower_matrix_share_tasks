@@ -1,1 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Open in Eisenhower Matrix</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.6; color: #1f2937;
+      background: linear-gradient(135deg, #EFF6FF 0%, #FFFFFF 100%);
+      min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
+    }
+    .card {
+      background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px;
+      padding: 32px 24px; max-width: 480px; width: 100%;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06); text-align: center;
+    }
+    .icon {
+      width: 72px; height: 72px; margin: 0 auto 16px auto; background: #3B82F6;
+      border-radius: 16px; display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 36px; font-weight: 700;
+    }
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 8px; color: #111827; }
+    p { font-size: 15px; color: #4b5563; margin-bottom: 20px; }
+    .task-preview {
+      background: #F9FAFB; border: 1px solid #e5e7eb; border-radius: 10px;
+      padding: 14px 16px; margin-bottom: 24px; text-align: left; font-size: 14px;
+    }
+    .task-preview .label {
+      font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+      color: #6b7280; font-weight: 600; display: block; margin-bottom: 2px;
+    }
+    .task-preview .value { color: #111827; word-break: break-word; margin-bottom: 8px; }
+    .task-preview .value:last-child { margin-bottom: 0; }
+    .btn {
+      display: inline-block; background: #3B82F6; color: white;
+      padding: 14px 28px; border-radius: 10px; text-decoration: none;
+      font-weight: 600; font-size: 16px; border: none; cursor: pointer;
+      width: 100%; margin-bottom: 12px;
+    }
+    .btn:hover { background: #2563EB; }
+    .btn-secondary { background: transparent; color: #3B82F6; border: 1px solid #3B82F6; }
+    .btn-secondary:hover { background: #EFF6FF; }
+    .footer { font-size: 13px; color: #6b7280; margin-top: 16px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">E</div>
+    <h1>Open in Eisenhower Matrix</h1>
+    <p>You've received a shared task. Tap the button below to add it to your matrix.</p>
 
+    <div id="preview" class="task-preview hidden">
+      <div id="preview-title-wrap">
+        <span class="label">Task</span>
+        <div class="value" id="preview-title"></div>
+      </div>
+      <div id="preview-quadrant-wrap">
+        <span class="label">Quadrant</span>
+        <div class="value" id="preview-quadrant"></div>
+      </div>
+      <div id="preview-due-wrap" class="hidden">
+        <span class="label">Due</span>
+        <div class="value" id="preview-due"></div>
+      </div>
+    </div>
+
+    <a id="openBtn" class="btn" href="#">Open in App</a>
+    <a class="btn btn-secondary" href="https://play.google.com/store/apps/details?id=com.willjkdouglas.eisenhower_matrix">Don't have the app? Get it here</a>
+
+    <p class="footer">If nothing happens after tapping "Open in App", the app may not be installed, or your browser may be blocking the redirect.</p>
+  </div>
+
+  <script>
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var deepLink = 'eisenhower-matrix://share-task?' + params.toString();
+      document.getElementById('openBtn').setAttribute('href', deepLink);
+
+      var title = params.get('title');
+      var quadrant = params.get('quadrant');
+      var dueDate = params.get('dueDate');
+
+      if (title || quadrant || dueDate) {
+        document.getElementById('preview').classList.remove('hidden');
+      }
+      if (title) {
+        document.getElementById('preview-title').textContent = title;
+      } else {
+        document.getElementById('preview-title-wrap').classList.add('hidden');
+      }
+      if (quadrant) {
+        var displayQuadrant = quadrant === 'Delete' ? 'Unimportant' : quadrant;
+        document.getElementById('preview-quadrant').textContent = displayQuadrant;
+      } else {
+        document.getElementById('preview-quadrant-wrap').classList.add('hidden');
+      }
+      if (dueDate) {
+        try {
+          var d = new Date(dueDate);
+          if (!isNaN(d.getTime())) {
+            document.getElementById('preview-due').textContent =
+              d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+            document.getElementById('preview-due-wrap').classList.remove('hidden');
+          }
+        } catch (e) { /* ignore */ }
+      }
+
+      // Auto-redirect after a brief delay so the user sees the preview.
+      // Mobile browsers may require a user gesture — the button is the reliable fallback.
+      setTimeout(function () { window.location.href = deepLink; }, 600);
+    })();
+  </script>
+</body>
+</html>
