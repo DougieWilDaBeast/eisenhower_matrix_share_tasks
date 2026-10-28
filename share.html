@@ -93,24 +93,47 @@
         document.getElementById('preview-title-wrap').classList.add('hidden');
       }
       if (quadrant) {
-        var displayQuadrant = quadrant === 'Delete' ? 'Unimportant' : quadrant;
+        var displayQuadrant = quadrant === 'Delete' ? 'Backlog' : quadrant;
         document.getElementById('preview-quadrant').textContent = displayQuadrant;
       } else {
         document.getElementById('preview-quadrant-wrap').classList.add('hidden');
       }
+      // Same rules as the app (utils/sharedDueDate.ts): 'yyyy-MM-dd' is a calendar day;
+      // an ISO instant is a timed task, unless hasTime=false (links from older app versions,
+      // which sent the sender's local midnight), in which case the day is recovered from it.
+      var hasTime = params.get('hasTime');
       if (dueDate) {
         try {
-          var d = new Date(dueDate);
-          if (!isNaN(d.getTime())) {
-            document.getElementById('preview-due').textContent =
-              d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+          var HOUR_MS = 60 * 60 * 1000;
+          var DAY_MS = 24 * HOUR_MS;
+          var d = null;
+          var timed = false;
+          var dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dueDate);
+          if (dateOnly) {
+            d = new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]));
+          } else {
+            var instant = new Date(dueDate);
+            if (!isNaN(instant.getTime())) {
+              if (hasTime === 'false') {
+                var day = new Date(Math.floor((instant.getTime() + 13 * HOUR_MS) / DAY_MS) * DAY_MS);
+                d = new Date(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate());
+              } else {
+                d = instant;
+                timed = true;
+              }
+            }
+          }
+          if (d && !isNaN(d.getTime())) {
+            var text = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+            if (timed) text += ', ' + d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+            document.getElementById('preview-due').textContent = text;
             document.getElementById('preview-due-wrap').classList.remove('hidden');
           }
         } catch (e) { /* ignore */ }
       }
 
       // Auto-redirect after a brief delay so the user sees the preview.
-      // Mobile browsers may require a user gesture — the button is the reliable fallback.
+      // Mobile browsers may require a user gesture - the button is the reliable fallback.
       setTimeout(function () { window.location.href = deepLink; }, 600);
     })();
   </script>
